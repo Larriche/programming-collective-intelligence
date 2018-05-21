@@ -42,6 +42,8 @@ def sim_distance(prefs, person1, person2):
     # Add up the squares of all the differences for similar movies
     sum_of_squares = sum([pow(prefs[person1][item] - prefs[person2][item], 2) for item in prefs[person1] if item in prefs[person2]])
 
+    return (1.0 / (1 + sqrt(sum_of_squares)))
+
 def sim_pearson(prefs, p1, p2):
     # Get the list of mutually rated items
     shared_items = {}
@@ -64,8 +66,6 @@ def sim_pearson(prefs, p1, p2):
     sum1 = sum(x)
     sum2 = sum(y)
 
-    print pearsonr(x, y)
-
     # Sum up the squares
     sum1Sq = sum([pow(prefs[p1][it], 2) for it in shared_items])
     sum2Sq = sum([pow(prefs[p2][it], 2) for it in shared_items])
@@ -76,6 +76,8 @@ def sim_pearson(prefs, p1, p2):
     # Calculate Pearson score
     num = pSum - (sum1 * sum2/n)
     den = sqrt((sum1Sq - pow(sum1, 2) / n) * (sum2Sq - pow(sum2, 2) / n))
+
+    if den == 0: return 0
 
     r = num / den
 
@@ -116,6 +118,8 @@ def sim_pearson_mine(prefs, p1, p2):
     num = sum_products - (n * mean_x * mean_y)
     den = sqrt(sum_x_sq - (n * pow(mean_x, 2))) * sqrt(sum_y_sq - (n * pow(mean_y, 2)))
 
+    if den == 0: return 0
+
     return num / den
 
 def top_matches(prefs, person, n = 5, similarity = sim_pearson):
@@ -126,7 +130,7 @@ def top_matches(prefs, person, n = 5, similarity = sim_pearson):
     scores.reverse()
     return scores[0:n]
 
-def get_recommendations(prefs, person, similarity=sim_pearson):
+def get_recommendations(prefs, person, similarity = sim_pearson):
     """
     Get recommendations for a person by using a weighted average of every
     other user's rankings
@@ -138,6 +142,7 @@ def get_recommendations(prefs, person, similarity=sim_pearson):
         if other == person: continue
 
         sim = similarity(prefs, person, other)
+        print sim
 
         # ignore scores of 0 or lower
         if sim <= 0: continue
@@ -180,6 +185,12 @@ def transform_prefs(prefs):
 #print sim_pearson(critics, 'Lisa Rose', 'Gene Seymour')
 #print sim_pearson_mine(critics, 'Lisa Rose', 'Gene Seymour')
 #print top_matches(critics, 'Larry', n = 2)
-print get_recommendations(critics, 'Larry')
-movies =  transform_prefs(critics)
-print top_matches(movies, 'Superman Returns')
+print "Getting recommendations for Larry using Pearson score"
+print get_recommendations(critics, 'Larry', sim_pearson)
+print get_recommendations(critics, 'Larry', sim_pearson_mine)
+
+print "Getting recommendations for Larry using Euclidean distance method"
+print get_recommendations(critics, 'Larry', sim_distance)
+
+print 'Larry and Toby Euclidean distance score'
+print sim_distance(critics, 'Larry', 'Toby')
