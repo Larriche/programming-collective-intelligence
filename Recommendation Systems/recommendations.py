@@ -145,7 +145,7 @@ def calculate_similar_items(prefs, n=10):
         batches += 1
 
         # Status info per batch for large datasets
-        if batches % 100 == 0: print "%d / %d" % (c, len(item_prefs))
+        if batches % 100 == 0: print "%d / %d" % (batches, len(item_prefs))
 
         scores = top_matches(item_prefs, item, n=n, similarity = sim_distance)
         result[item] = scores
@@ -233,3 +233,23 @@ def transform_prefs(prefs):
             result[item][person] = prefs[person][item]
 
     return result
+
+def load_movie_lens(path = 'ml-100k'):
+    """
+    Load the GroupLens movie dataset
+    """
+    movies = {}
+
+    # Get movie titles
+    for line in open(path + '/u.item'):
+        (id, title) = line.split('|')[0 : 2]
+        movies[id] = title
+
+    # Load data
+    prefs = {}
+    for line in open(path + '/u.data'):
+        (user, movieid, rating, ts) = line.split('\t')
+        prefs.setdefault(user, {})
+        prefs[user][movies[movieid]] = float(rating)
+
+    return prefs
