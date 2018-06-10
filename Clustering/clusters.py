@@ -117,12 +117,14 @@ def kcluster(rows, distance=pearson, k=4):
         for j in range(len(rows)):
             row = rows[j]
             bestmatch = 0
+            best_distance = distance(clusters[bestmatch], row)
 
             for i in range(k):
                 d = distance(clusters[i], row)
 
-                if d < distance(clusters[bestmatch], row):
+                if d < best_distance:
                     bestmatch = i
+                    best_distance = d
 
             bestmatches[bestmatch].append(j)
 
@@ -227,11 +229,3 @@ def draw_node(draw, cluster, x, y, scaling, labels):
     else:
         # If this is an endpoint, draw the item label
         draw.text((x+5, y-7), labels[cluster.id], (0, 0, 0))
-
-
-#print read_file('blogdata.txt')
-blognames, words, data = read_file('blogdata.txt')
-cluster = hcluster(data)
-kcluster = kcluster(data,k=10)
-print kcluster
-#draw_dendrogram(cluster, blognames, jpeg='blogdata.jpg')
