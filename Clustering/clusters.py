@@ -55,6 +55,38 @@ def pearson(v1, v2):
 
     return 1.0 - num/den
 
+def tanimoto(v1, v2):
+    """
+    Calculate the Tanimoto coefficient for two rows of data
+
+    The formula for tanimoto coefficient = Nc / (Na + Nb - Nc)
+
+    where in our case,
+          Na = Number of items in row A (a set of non-zero values in v1)
+          Nb = Number of items in row B (a set of non-zero values in v2)
+          Nc = Number of items in C (a set of values where non-zero values occurred for both v1 and v2 in
+              a given column)
+    """
+    lenA = 0
+    lenB = 0
+    lenC = 0
+
+    for i in range(len(v1)):
+        if v1[i] != 0:
+            lenA += 1
+
+        if v2[i] != 0:
+            lenB += 1
+
+        if (v1[i] != 0) and (v2[i] != 0):
+            lenC += 1
+
+    coefficient = float(lenC) / (lenA + lenB - lenC)
+
+    # higher coefficients represent more similarity but we need smaller values for distance
+    # so we return 1 - coefficient instead
+    return 1.0 - coefficient
+
 def hcluster(rows, distance = pearson):
     distances = {}
     current_clust_id = -1
