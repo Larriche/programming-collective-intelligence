@@ -209,17 +209,3 @@ for line in file('schedule.txt'):
     flights.setdefault((origin, dest), [])
 
     flights[(origin, dest)].append((depart, arrive, int(price)))
-
-
-domain = [(0,8)] * (len(people) * 2)
-s = randomoptimize(domain, schedulecost)
-print schedulecost(s)
-
-s = hillclimb(domain, schedulecost)
-print schedulecost(s)
-
-s = annealingoptimize(domain, schedulecost)
-print schedulecost(s)
-
-s = geneticoptimize(domain, schedulecost)
-print schedulecost(s)

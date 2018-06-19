@@ -1,6 +1,6 @@
 import random
 import math
-
+from optimization import *
 
 def printsolution(vec):
     slots = []
@@ -43,7 +43,6 @@ def dormcost(vec):
         del slots[x]
 
     return cost
-
 
 # The dorms, each of which has two available spaces
 dorms = ['Zeus', 'Athena', 'Hercules', 'Bacchus', 'Pluto']
