@@ -73,6 +73,42 @@ class classifier:
         return weightedprob
 
 class naivebayes(classifier):
+    def __init__(self, getfeatures):
+        classifier.__init__(self, getfeatures)
+        self.thresholds = {}
+
+    def setthreshold(self, cat, t):
+        self.thresholds[cat] = t
+
+    def getthreshold(self, cat):
+        if cat not in self.thresholds:
+            return 1.0
+
+        return self.thresholds[cat]
+
+    def classify(self, item, default=None):
+        probs = {}
+
+        # Find the category with the highest probability
+        max = 0.0
+
+        for cat in self.categories():
+            probs[cat] = self.prob(item, cat)
+
+            if probs[cat] > max:
+                max = probs[cat]
+                best = cat
+
+        # Make sure the probability exceeds threshold*next best
+        for cat in probs:
+            if cat == best:
+                continue
+
+            if probs[cat] * self.getthreshold(best) > probs[best]:
+                return default
+
+        return best
+
     def docprob(self, item, cat):
         features = self.getfeatures(item)
 
@@ -107,8 +143,16 @@ def sampletrain(cl):
 
 cl = naivebayes(getwords)
 sampletrain(cl)
-print cl.prob('quick rabbit', 'good')
-print cl.prob('quick rabbit', 'bad')
-print cl.prob('money', 'good')
-print cl.prob('money', 'bad')
+print cl.classify('quick rabbit', default='unknown')
+print cl.classify('quick money', default='unknown')
+
+cl.setthreshold('bad', 3.0)
+print cl.classify('quick money', default='unknown')
+
+for i in range(10):
+    sampletrain(cl)
+
+print cl.classify('quick money', default='unknown')
+
+cl.classify('quick money', default='unknown')
 
