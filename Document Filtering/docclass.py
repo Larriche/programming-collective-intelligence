@@ -140,19 +140,3 @@ def sampletrain(cl):
     cl.train('buy pharmaceuticals now', 'bad')
     cl.train('make quick money at the online casino', 'bad')
     cl.train('the quick brown fox jumps', 'good')
-
-cl = naivebayes(getwords)
-sampletrain(cl)
-print cl.classify('quick rabbit', default='unknown')
-print cl.classify('quick money', default='unknown')
-
-cl.setthreshold('bad', 3.0)
-print cl.classify('quick money', default='unknown')
-
-for i in range(10):
-    sampletrain(cl)
-
-print cl.classify('quick money', default='unknown')
-
-cl.classify('quick money', default='unknown')
-
