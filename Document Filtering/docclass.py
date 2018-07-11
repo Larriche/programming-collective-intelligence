@@ -1,5 +1,6 @@
 import re
 import math
+import sqlite3
 
 class classifier:
     def __init__(self, getfeatures, filename=None):
@@ -10,37 +11,51 @@ class classifier:
         self.cc = {}
         self.getfeatures = getfeatures
 
+        # DB connection
+        self.conn = None
+
     def incf(self, f, cat):
         # Increase the count of a feature/category pair
-        self.fc.setdefault(f, {})
-        self.fc[f].setdefault(cat, 0)
-        self.fc[f][cat] += 1
+        count = self.fcount(f, cat)
+        if count == 0:
+            self.conn.execute("INSERT INTO fc(feature, category, count) VALUES ('%s', '%s', 1)" % (f, cat))
+        else:
+            self.conn.execute("UPDATE fc SET count = %d WHERE feature='%s' AND category='%s'" % (count+1, f, cat))
 
     def incc(self, cat):
         # Increase the count of a category
-        self.cc.setdefault(cat, 0)
-        self.cc[cat] += 1
+        count = self.catcount(cat)
+
+        if count == 0:
+            self.conn.execute("INSERT INTO cc(category, count) VALUES ('%s', 1)" % (cat))
+        else:
+            self.conn.execute("UPDATE cc SET count=%d WHERE category='%s'" % (count+1, cat))
 
     def fcount(self, f, cat):
         # The number of times a feature has appeared in a category
-        if f in self.fc and cat in self.fc[f]:
-            return float(self.fc[f][cat])
+        res = self.conn.execute("SELECT count FROM fc WHERE feature='%s' AND category='%s'" % (f, cat)).fetchone()
 
-        return 0.0
+        if res == None: return 0
+        else: return float(res[0])
 
     def catcount(self, cat):
         # The number of items in a category
-        if cat in self.cc:
-            return float(self.cc[cat])
+        res = self.conn.execute("SELECT count FROM cc WHERE category='%s'" % (cat)).fetchone()
 
-        return 0
+        if res == None:
+            return 0
+        else:
+            return float(res[0])
 
     def totalcount(self):
         # The total number of items
-        return sum(self.cc.values())
+        res = self.conn.execute("SELECT sum(count) FROM cc").fetchone()
+        if res == None: return 0
+        return res[0]
 
     def categories(self):
-        return self.cc.keys()
+        cur = self.conn.execute("SELECT category FROM cc")
+        return [d[0] for d in cur]
 
     def train(self, item, cat):
         features = self.getfeatures(item)
@@ -51,6 +66,8 @@ class classifier:
 
         # Increment the count for this category
         self.incc(cat)
+
+        self.conn.commit()
 
     def fprob(self, f, cat):
         if self.catcount(cat) == 0:
@@ -71,6 +88,43 @@ class classifier:
         weightedprob = ((weight * ap) + (totals * basicprob)) / (weight + totals)
 
         return weightedprob
+
+    def setdb(self, dbfile):
+        """
+        Set up an SQLite database instance to store training results
+        """
+        # Create the database for storing training results
+        self.conn = sqlite3.connect(dbfile)
+
+        # SQL for setting up table to store feature counts
+        fc_table_sql = """
+                    CREATE TABLE IF NOT EXISTS fc(
+                        feature TEXT,
+                        category VARCHAR(255),
+                        count INT
+                    );
+                    """
+
+        # SQL for setting up table for storing category counts
+        cc_table_sql = """
+                    CREATE TABLE IF NOT EXISTS cc(
+                        category VARCHAR(255),
+                        count INT
+                    );
+                    """
+
+        if self.conn is not None:
+            try:
+                c = self.conn.cursor()
+                c.execute(fc_table_sql)
+                c.execute(cc_table_sql)
+            except Exception as e:
+                return False
+        else:
+            return False
+
+        return True
+
 
 class naivebayes(classifier):
     def __init__(self, getfeatures):
